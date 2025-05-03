@@ -39,14 +39,14 @@ A RESTful API for a blogging platform built with Django REST Framework. This API
 │
 ├── apps/                       # All Django apps live here
 │   ├── __init__.py
-│   ├── core/                   # Core/shared utilities
+│   ├── blog/                   # Blog app
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
 │   │   ├── models.py
-│   │   ├── views.py
 │   │   ├── serializers.py
 │   │   ├── urls.py
-│   │   ├── services.py         # Business logic
-│   │   ├── selectors.py        # Read logic/queries
-│   │   ├── permissions.py
+│   │   ├── views.py
 │   │   ├── tests/
 │   │   │   ├── __init__.py
 │   │   │   ├── test_models.py
