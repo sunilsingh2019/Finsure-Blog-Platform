@@ -2,6 +2,20 @@ from django.db import models
 
 # Create your models here.
 
+class Category(models.Model):
+    """Model for blog post categories"""
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = "Categories"
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 class Post(models.Model):
     """Model for blog posts"""
     title = models.CharField(max_length=255)
@@ -9,6 +23,9 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     author = models.CharField(max_length=255)
+    categories = models.ManyToManyField(Category, related_name='posts', blank=True)
+    likes = models.PositiveIntegerField(default=0)
+    dislikes = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ['-created_at']
