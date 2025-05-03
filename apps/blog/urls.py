@@ -1,10 +1,11 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
-from .views import PostViewSet, CommentCreateListView, CommentDetailView
+from .views import PostViewSet, CommentCreateListView, CommentDetailView, CategoryViewSet
 
 # Create a router for viewsets
 router = DefaultRouter()
 router.register(r'posts', PostViewSet)
+router.register(r'categories', CategoryViewSet)
 
 # URL patterns for the blog app
 urlpatterns = [

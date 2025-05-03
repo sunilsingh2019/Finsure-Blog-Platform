@@ -5,6 +5,9 @@ A RESTful API for a blogging platform built with Django REST Framework. This API
 ## Features
 
 - RESTful API for blog posts and comments
+- Category system for organizing posts
+- Like/dislike functionality for posts
+- Search and filtering capabilities
 - Comprehensive test suite
 - API documentation with Swagger/OpenAPI
 - Docker support for easy setup and deployment
@@ -74,7 +77,7 @@ cd blog-platform-api
 
 2. Create `.env` file from example:
 ```bash
-cp .env.example .env
+cp .env.sample .env
 ```
 
 3. Build and run the Docker containers:
@@ -110,7 +113,7 @@ pip install -r requirements.txt
 
 3. Create `.env` file from example:
 ```bash
-cp .env.example .env
+cp .env.sample .env
 ```
 
 4. Set up the database:
@@ -140,13 +143,31 @@ Once the server is running, you can access the API documentation at:
 - `GET /api/posts/{id}/`: Get details of a specific post
 - `PUT /api/posts/{id}/`: Update a post
 - `DELETE /api/posts/{id}/`: Delete a post
+- `POST /api/posts/{id}/like/`: Like a post
+- `POST /api/posts/{id}/dislike/`: Dislike a post
 
 ### Comments
 
 - `POST /api/posts/{post_id}/comments/`: Create a comment on a post
 - `GET /api/posts/{post_id}/comments/`: List all comments for a post
 - `GET /api/posts/{post_id}/comments/{id}/`: Get details of a specific comment
+- `PUT /api/posts/{post_id}/comments/{id}/`: Update a comment
 - `DELETE /api/posts/{post_id}/comments/{id}/`: Delete a comment
+
+### Categories
+
+- `POST /api/categories/`: Create a new category
+- `GET /api/categories/`: List all categories
+- `GET /api/categories/{id}/`: Get details of a specific category
+- `PUT /api/categories/{id}/`: Update a category
+- `DELETE /api/categories/{id}/`: Delete a category
+
+## Filtering and Searching
+
+- Filter posts by author: `/api/posts/?author=JohnDoe`
+- Filter posts by category: `/api/posts/?categories=1`
+- Search in post titles and content: `/api/posts/?search=django`
+- Order posts: `/api/posts/?ordering=-created_at`
 
 ## Running Tests
 

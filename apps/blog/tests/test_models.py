@@ -1,5 +1,24 @@
 from django.test import TestCase
-from apps.blog.models import Post, Comment
+from apps.blog.models import Post, Comment, Category
+
+
+class CategoryModelTest(TestCase):
+    """Test case for the Category model."""
+
+    def setUp(self):
+        Category.objects.create(
+            name="Test Category",
+            description="This is a test category."
+        )
+
+    def test_category_creation(self):
+        category = Category.objects.get(name="Test Category")
+        self.assertEqual(category.description, "This is a test category.")
+        self.assertTrue(category.created_at)
+
+    def test_category_str_representation(self):
+        category = Category.objects.get(name="Test Category")
+        self.assertEqual(str(category), "Test Category")
 
 
 class PostModelTest(TestCase):

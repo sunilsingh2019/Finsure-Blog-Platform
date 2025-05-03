@@ -88,8 +88,8 @@ class CommentCreateListView(generics.ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
-class CommentDetailView(generics.RetrieveDestroyAPIView):
-    """View for retrieving and deleting a specific comment"""
+class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """View for retrieving, updating, and deleting a specific comment"""
     serializer_class = CommentDetailSerializer
     
     def get_queryset(self):

@@ -1,7 +1,60 @@
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from apps.blog.models import Post, Comment
+from apps.blog.models import Post, Comment, Category
+
+
+class CategoryAPITests(APITestCase):
+    """Test case for Category API endpoints."""
+
+    def setUp(self):
+        # Create some initial categories
+        self.category1 = Category.objects.create(name="Category 1", description="Description 1")
+        self.category2 = Category.objects.create(name="Category 2", description="Description 2")
+        
+        # URLs
+        self.list_create_url = reverse('category-list')
+        self.detail_url = reverse('category-detail', kwargs={'pk': self.category1.pk})
+
+    def test_create_category(self):
+        """Test creating a new category."""
+        data = {'name': 'New Category', 'description': 'New Description'}
+        response = self.client.post(self.list_create_url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Category.objects.count(), 3)
+        self.assertEqual(Category.objects.get(name='New Category').description, 'New Description')
+
+    def test_list_categories(self):
+        """Test retrieving a list of categories."""
+        response = self.client.get(self.list_create_url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)  # We have 2 categories without pagination
+
+    def test_retrieve_category(self):
+        """Test retrieving a specific category."""
+        response = self.client.get(self.detail_url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['name'], 'Category 1')
+
+    def test_update_category(self):
+        """Test updating a category."""
+        data = {'name': 'Updated Category', 'description': 'Updated Description'}
+        response = self.client.put(self.detail_url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.category1.refresh_from_db()
+        self.assertEqual(self.category1.name, 'Updated Category')
+        self.assertEqual(self.category1.description, 'Updated Description')
+
+    def test_delete_category(self):
+        """Test deleting a category."""
+        response = self.client.delete(self.detail_url)
+        
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Category.objects.count(), 1)
 
 
 class PostAPITests(APITestCase):
@@ -94,6 +147,16 @@ class CommentAPITests(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['content'], 'Comment 1')
+
+    def test_update_comment(self):
+        """Test updating a comment."""
+        data = {'content': 'Updated Comment', 'author': 'Updated Commenter'}
+        response = self.client.put(self.detail_url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.comment1.refresh_from_db()
+        self.assertEqual(self.comment1.content, 'Updated Comment')
+        self.assertEqual(self.comment1.author, 'Updated Commenter')
 
     def test_delete_comment(self):
         """Test deleting a comment."""
