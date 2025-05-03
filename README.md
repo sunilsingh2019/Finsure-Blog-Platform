@@ -1,6 +1,6 @@
 # Blog Platform API
 
-A RESTful API for a blogging platform built with Django REST Framework. This API allows users to create, read, update, and delete blog posts and comments.
+A RESTful API for a blogging platform built with Django REST Framework. This API allows users to create, read, update, and delete blog posts and comments, with additional features like categories, search, and like/dislike functionality.
 
 ## Features
 
@@ -8,6 +8,7 @@ A RESTful API for a blogging platform built with Django REST Framework. This API
 - Category system for organizing posts
 - Like/dislike functionality for posts
 - Search and filtering capabilities
+- Pagination with 5 items per page
 - Comprehensive test suite
 - API documentation with Swagger/OpenAPI
 - Docker support for easy setup and deployment
@@ -18,7 +19,8 @@ A RESTful API for a blogging platform built with Django REST Framework. This API
 - Python 3.11+
 - Django 5.1.8
 - Django REST Framework 3.15.0
-- PostgreSQL
+- PostgreSQL 15
+- django-filter 24.1
 
 ## Project Structure
 
@@ -26,7 +28,7 @@ A RESTful API for a blogging platform built with Django REST Framework. This API
 │
 ├── manage.py
 ├── requirements.txt
-├── .env
+├── .env.sample
 ├── .gitignore
 │
 ├── config/                     # Project settings
@@ -44,16 +46,19 @@ A RESTful API for a blogging platform built with Django REST Framework. This API
 │   ├── __init__.py
 │   ├── blog/                   # Blog app
 │   │   ├── __init__.py
-│   │   ├── admin.py
-│   │   ├── apps.py
-│   │   ├── models.py
-│   │   ├── serializers.py
-│   │   ├── urls.py
-│   │   ├── views.py
-│   │   ├── tests/
+│   │   ├── admin.py            # Admin interface configuration
+│   │   ├── apps.py             # App configuration
+│   │   ├── models.py           # Data models (Post, Comment, Category)
+│   │   ├── serializers.py      # DRF serializers
+│   │   ├── urls.py             # URL routing
+│   │   ├── views.py            # API views and viewsets
+│   │   ├── tests/              # Tests directory
 │   │   │   ├── __init__.py
-│   │   │   ├── test_models.py
-│   │   │   ├── test_views.py
+│   │   │   ├── test_models.py  # Model tests
+│   │   │   ├── test_views.py   # API tests
+│
+├── templates/                  # HTML templates
+│   ├── django_filters/         # Templates for django-filter
 │
 ├── static/                     # Static files
 ├── media/                      # Media files (user uploads)
@@ -61,8 +66,8 @@ A RESTful API for a blogging platform built with Django REST Framework. This API
 ├── scripts/                    # Custom management/utility scripts
 │
 └── docker/                     # Docker config
-    ├── Dockerfile
-    └── docker-compose.yml
+    ├── Dockerfile              # Container definition
+    └── docker-compose.yml      # Service configuration
 ```
 
 ## Getting Started
@@ -71,8 +76,8 @@ A RESTful API for a blogging platform built with Django REST Framework. This API
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/blog-platform-api.git
-cd blog-platform-api
+git clone https://github.com/sunilsingh2019/Finsure-Blog-Platform.git
+cd Finsure-Blog-Platform
 ```
 
 2. Create `.env` file from example:
@@ -82,26 +87,27 @@ cp .env.sample .env
 
 3. Build and run the Docker containers:
 ```bash
-docker-compose -f docker/docker-compose.yml up --build
+cd docker
+docker-compose up --build
 ```
 
 4. Create database migrations:
 ```bash
-docker-compose -f docker/docker-compose.yml exec web python manage.py makemigrations
-docker-compose -f docker/docker-compose.yml exec web python manage.py migrate
+docker-compose exec web python manage.py makemigrations
+docker-compose exec web python manage.py migrate
 ```
 
 5. Create a superuser (optional):
 ```bash
-docker-compose -f docker/docker-compose.yml exec web python manage.py createsuperuser
+docker-compose exec web python manage.py createsuperuser
 ```
 
 ### Without Docker
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/blog-platform-api.git
-cd blog-platform-api
+git clone https://github.com/sunilsingh2019/Finsure-Blog-Platform.git
+cd Finsure-Blog-Platform
 ```
 
 2. Create a virtual environment and install dependencies:
@@ -116,13 +122,18 @@ pip install -r requirements.txt
 cp .env.sample .env
 ```
 
-4. Set up the database:
+4. Set up PostgreSQL:
+   - Install PostgreSQL if not already installed
+   - Create a database for the project
+   - Update .env with your database credentials
+
+5. Set up the database:
 ```bash
 python manage.py makemigrations
 python manage.py migrate
 ```
 
-5. Run the development server:
+6. Run the development server:
 ```bash
 python manage.py runserver
 ```
@@ -139,7 +150,7 @@ Once the server is running, you can access the API documentation at:
 ### Posts
 
 - `POST /api/posts/`: Create a new blog post
-- `GET /api/posts/`: List all blog posts
+- `GET /api/posts/`: List all blog posts (paginated, 5 per page)
 - `GET /api/posts/{id}/`: Get details of a specific post
 - `PUT /api/posts/{id}/`: Update a post
 - `DELETE /api/posts/{id}/`: Delete a post
@@ -164,20 +175,76 @@ Once the server is running, you can access the API documentation at:
 
 ## Filtering and Searching
 
-- Filter posts by author: `/api/posts/?author=JohnDoe`
-- Filter posts by category: `/api/posts/?categories=1`
-- Search in post titles and content: `/api/posts/?search=django`
-- Order posts: `/api/posts/?ordering=-created_at`
+The API supports various filtering and searching options:
+
+- **Filter posts by author**: 
+  ```
+  GET /api/posts/?author=JohnDoe
+  ```
+
+- **Filter posts by category**: 
+  ```
+  GET /api/posts/?categories=1
+  ```
+
+- **Search in post titles and content**: 
+  ```
+  GET /api/posts/?search=django
+  ```
+
+- **Order posts by various fields**: 
+  ```
+  GET /api/posts/?ordering=-created_at
+  GET /api/posts/?ordering=title
+  GET /api/posts/?ordering=-likes
+  ```
+
+## Pagination
+
+The API uses page-based pagination with 5 items per page:
+
+- **View first page**:
+  ```
+  GET /api/posts/
+  ```
+
+- **View specific page**:
+  ```
+  GET /api/posts/?page=2
+  ```
+
+- The response includes:
+  - `count`: Total number of items
+  - `next`: URL to the next page (null if on last page)
+  - `previous`: URL to the previous page (null if on first page)
+  - `results`: List of items on the current page
 
 ## Running Tests
 
+The project includes comprehensive tests covering models, API endpoints, permissions, and pagination.
+
 ```bash
 # Using Docker
-docker-compose -f docker/docker-compose.yml exec web python manage.py test
+docker-compose exec web python manage.py test
 
 # Without Docker
 python manage.py test
 ```
+
+## Admin Interface
+
+The Django admin interface is available at `/admin/` and provides a user-friendly way to manage all content.
+
+## Future Enhancements
+
+Potential future improvements:
+- User authentication with JWT tokens
+- User profiles and avatars
+- Rich text support for posts
+- Image uploads for posts
+- Tags system
+- Newsletter subscription
+- Comment threading
 
 ## License
 
