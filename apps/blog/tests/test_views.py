@@ -61,7 +61,7 @@ class PostAPITests(APITestCase):
     """Test case for Post API endpoints."""
 
     def setUp(self):
-        # Create some initial posts
+        # Create some initial posts (2 posts)
         self.post1 = Post.objects.create(title="Post 1", content="Content 1", author="Author 1")
         self.post2 = Post.objects.create(title="Post 2", content="Content 2", author="Author 2")
         
@@ -83,7 +83,7 @@ class PostAPITests(APITestCase):
         response = self.client.get(self.list_create_url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 2)  # Because we have pagination
+        self.assertEqual(len(response.data['results']), 2)  # We have 2 posts total
 
     def test_retrieve_post(self):
         """Test retrieving a specific post."""
@@ -108,6 +108,42 @@ class PostAPITests(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Post.objects.count(), 1)
+        
+    def test_pagination(self):
+        """Test pagination with multiple pages."""
+        # Create 10 more posts (for a total of 12)
+        for i in range(3, 13):
+            Post.objects.create(
+                title=f"Post {i}",
+                content=f"Content {i}",
+                author=f"Author {i}"
+            )
+        
+        # Test first page
+        response = self.client.get(self.list_create_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 5)  # PAGE_SIZE is 5
+        self.assertEqual(response.data['count'], 12)  # Total of 12 posts
+        self.assertIsNotNone(response.data['next'])  # Should have a next page
+        self.assertIsNone(response.data['previous'])  # No previous page
+        
+        # Test second page
+        response = self.client.get(response.data['next'])
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 5)  # PAGE_SIZE is 5
+        self.assertIsNotNone(response.data['next'])  # Should have a next page (3rd)
+        self.assertIsNotNone(response.data['previous'])  # Should have a previous page
+        
+        # Test third page
+        response = self.client.get(response.data['next'])
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['results']), 2)  # 2 remaining posts
+        self.assertIsNone(response.data['next'])  # No next page
+        self.assertIsNotNone(response.data['previous'])  # Should have a previous page
+        
+        # Test invalid page
+        response = self.client.get(f"{self.list_create_url}?page=999")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class CommentAPITests(APITestCase):
@@ -163,4 +199,53 @@ class CommentAPITests(APITestCase):
         response = self.client.delete(self.detail_url)
         
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(Comment.objects.count(), 1) 
+        self.assertEqual(Comment.objects.count(), 1)
+
+
+class PermissionsTests(APITestCase):
+    """Test case for checking permissions."""
+
+    def setUp(self):
+        # Create a post
+        self.post = Post.objects.create(title="Test Post", content="Test Content", author="User A")
+        
+        # Create a comment
+        self.comment = Comment.objects.create(content="Test Comment", post=self.post, author="User A")
+        
+        # URLs
+        self.post_url = reverse('post-detail', kwargs={'pk': self.post.pk})
+        self.comment_url = reverse('comment-detail', kwargs={'post_id': self.post.pk, 'pk': self.comment.pk})
+
+    def test_different_user_can_update_post(self):
+        """Test that a different user can update another user's post."""
+        data = {'title': 'Updated by User B', 'content': 'Content updated by User B', 'author': 'User B'}
+        response = self.client.put(self.post_url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.post.refresh_from_db()
+        self.assertEqual(self.post.title, 'Updated by User B')
+        self.assertEqual(self.post.author, 'User B')  # Author changed to User B
+
+    def test_different_user_can_delete_post(self):
+        """Test that a different user can delete another user's post."""
+        response = self.client.delete(self.post_url)
+        
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Post.objects.count(), 0)
+
+    def test_different_user_can_update_comment(self):
+        """Test that a different user can update another user's comment."""
+        data = {'content': 'Comment updated by User B', 'author': 'User B'}
+        response = self.client.put(self.comment_url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.comment.refresh_from_db()
+        self.assertEqual(self.comment.content, 'Comment updated by User B')
+        self.assertEqual(self.comment.author, 'User B')  # Author changed to User B
+
+    def test_different_user_can_delete_comment(self):
+        """Test that a different user can delete another user's comment."""
+        response = self.client.delete(self.comment_url)
+        
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Comment.objects.count(), 0) 
