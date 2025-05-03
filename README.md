@@ -1,83 +1,161 @@
-# Django REST Framework Boilerplate
+# Blog Platform API
 
-A modern Django REST Framework boilerplate with Docker support.
+A RESTful API for a blogging platform built with Django REST Framework. This API allows users to create, read, update, and delete blog posts and comments.
 
 ## Features
 
-- Django 5.1.7
-- Django REST Framework 3.15.0
-- PostgreSQL database
-- Swagger API documentation
-- Docker and Docker Compose ready
-- Custom User model with email authentication
-- WhiteNoise for static files
-- RESTful API structure
+- RESTful API for blog posts and comments
+- Comprehensive test suite
+- API documentation with Swagger/OpenAPI
+- Docker support for easy setup and deployment
 
 ## Requirements
 
-- Docker
-- Docker Compose
-
-## Quick Start
-
-1. Clone this repository
-2. Create a `.env` file (copy from `.env.example`)
-3. Build and run the Docker containers:
-
-```bash
-docker compose up --build
-```
-
-4. The application will be available at http://localhost:8000/
-
-## API Documentation
-
-- Swagger UI: http://localhost:8000/
-- ReDoc: http://localhost:8000/redoc/
+- Docker and Docker Compose (recommended)
+- Python 3.11+
+- Django 5.1.8
+- Django REST Framework 3.15.0
+- PostgreSQL
 
 ## Project Structure
 
 ```
-.
-├── apps                   # Django applications
-│   ├── api                # API related code
-│   ├── core               # Core application
-│   └── users              # User management
-├── core                   # Django project settings
-├── static                 # Static files
-├── media                  # User-uploaded content
-├── templates              # HTML templates
-├── docker-compose.yml     # Docker Compose configuration
-├── Dockerfile             # Docker configuration
-├── manage.py              # Django command-line utility
-├── README.md              # Project documentation
-└── requirements.txt       # Python dependencies
+│
+├── manage.py
+├── requirements.txt
+├── .env
+├── .gitignore
+│
+├── config/                     # Project settings
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings/
+│   │   ├── __init__.py
+│   │   ├── base.py             # Base settings
+│   │   ├── development.py      # Dev-specific settings
+│   │   ├── production.py       # Prod-specific settings
+│   ├── urls.py
+│   ├── wsgi.py
+│
+├── apps/                       # All Django apps live here
+│   ├── __init__.py
+│   ├── core/                   # Core/shared utilities
+│   │   ├── models.py
+│   │   ├── views.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   ├── services.py         # Business logic
+│   │   ├── selectors.py        # Read logic/queries
+│   │   ├── permissions.py
+│   │   ├── tests/
+│   │   │   ├── __init__.py
+│   │   │   ├── test_models.py
+│   │   │   ├── test_views.py
+│
+├── static/                     # Static files
+├── media/                      # Media files (user uploads)
+│
+├── scripts/                    # Custom management/utility scripts
+│
+└── docker/                     # Docker config
+    ├── Dockerfile
+    └── docker-compose.yml
 ```
 
-## Commands
+## Getting Started
 
-### Running the Application
+### Using Docker (Recommended)
 
+1. Clone the repository:
 ```bash
-docker compose up
+git clone https://github.com/yourusername/blog-platform-api.git
+cd blog-platform-api
 ```
 
-### Creating a Superuser
-
+2. Create `.env` file from example:
 ```bash
-docker compose exec web python manage.py createsuperuser
+cp .env.example .env
 ```
 
-### Running Migrations
-
+3. Build and run the Docker containers:
 ```bash
-docker compose exec web python manage.py migrate
+docker-compose -f docker/docker-compose.yml up --build
 ```
 
-### Collecting Static Files
+4. Create database migrations:
+```bash
+docker-compose -f docker/docker-compose.yml exec web python manage.py makemigrations
+docker-compose -f docker/docker-compose.yml exec web python manage.py migrate
+```
+
+5. Create a superuser (optional):
+```bash
+docker-compose -f docker/docker-compose.yml exec web python manage.py createsuperuser
+```
+
+### Without Docker
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/blog-platform-api.git
+cd blog-platform-api
+```
+
+2. Create a virtual environment and install dependencies:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+3. Create `.env` file from example:
+```bash
+cp .env.example .env
+```
+
+4. Set up the database:
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+5. Run the development server:
+```bash
+python manage.py runserver
+```
+
+## API Documentation
+
+Once the server is running, you can access the API documentation at:
+
+- Swagger UI: http://localhost:8000/
+- ReDoc: http://localhost:8000/redoc/
+
+## API Endpoints
+
+### Posts
+
+- `POST /api/posts/`: Create a new blog post
+- `GET /api/posts/`: List all blog posts
+- `GET /api/posts/{id}/`: Get details of a specific post
+- `PUT /api/posts/{id}/`: Update a post
+- `DELETE /api/posts/{id}/`: Delete a post
+
+### Comments
+
+- `POST /api/posts/{post_id}/comments/`: Create a comment on a post
+- `GET /api/posts/{post_id}/comments/`: List all comments for a post
+- `GET /api/posts/{post_id}/comments/{id}/`: Get details of a specific comment
+- `DELETE /api/posts/{post_id}/comments/{id}/`: Delete a comment
+
+## Running Tests
 
 ```bash
-docker compose exec web python manage.py collectstatic --noinput
+# Using Docker
+docker-compose -f docker/docker-compose.yml exec web python manage.py test
+
+# Without Docker
+python manage.py test
 ```
 
 ## License

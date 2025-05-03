@@ -8,5 +8,6 @@ router.register(r'users', UserViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('', include('apps.blog.urls')),  # Include blog URLs
     path('auth/', include('rest_framework.urls', namespace='rest_framework')),
 ] 
